@@ -31,8 +31,8 @@ tm = 0
 #database setup
 con = sqlite3.connect('sensorsig.db')
 cur = con.cursor()
-#cur.execute('''CREATE TABLE datasense
-            #(Time, Rain, Moisture)'')
+cur.execute('''CREATE TABLE datasense
+            (Time, Rain, Moisture)''')
 
 
 #sensor data collection and transfer to valve
