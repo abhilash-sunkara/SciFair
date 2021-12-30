@@ -24,15 +24,22 @@ GPIO.setup(rp, GPIO.OUT)
 GPIO.output(moistp, 1)
 GPIO.output(rp, 1)
 
+#functions to send data
+def senddata(jd):
+    url = "http://127.0.0.1:5000/postdata"
+    requests.post(url,json = jd)
+    
+    
+
 #hourly forecast time management
 hour = 0
-tm = 0
+tm = 13
 
 #database setup
 con = sqlite3.connect('sensorsig.db')
 cur = con.cursor()
-cur.execute('''CREATE TABLE datasense
-            (Time, Rain, Moisture)''')
+#cur.execute('''CREATE TABLE datasense
+            #(Time, Rain, Moisture)'')
 
 
 #sensor data collection and transfer to valve
@@ -47,13 +54,14 @@ while True:
     r = GPIO.input(rsig)
     m = GPIO.input(moistsig)
     wcode = wf.forelogic(hour)
+    ctm = time.ctime()
     if x == 1:
         print('inserted initial value')
         cur.execute('''INSERT INTO datasense VALUES(?, ?, ?)''', (time.ctime(), r, m))
         if (r == 1 and m == 1):
-            requests.post("http://127.0.0.1:5000/postdata",json = {"time" : time.ctime(), "state" : "open"})
+            senddata({"time" : ctm, "state" : "open"})
         else:   
-            requests.post("http://127.0.0.1:5000/postdata",json = {"time" : time.ctime(), "state" : "close"})
+            senddata({"time" : ctm, "state" : "close"})
         x = x+1
     for row in cur.execute('''SELECT * FROM datasense ORDER BY time DESC LIMIT 1'''):
         print (row)
@@ -67,23 +75,23 @@ while True:
             con.commit()
             if (r == 1 and m == 1):
                 if wcode == 'dopen':
-                    requests.post("http://127.0.0.1:5000/postdata",json = {"time" : time.ctime(), "state" : "open"})
+                    senddata({"time" : ctm, "state" : "open"})
                 elif wcode == 'dclose':
-                    requests.post("http://127.0.0.1:5000/postdata",json = {"time" : time.ctime(), "state" : "close"})
+                    senddata({"time" : ctm, "state" : "close"})
                 elif wcode == 'popen':
                     tm = tm + 5
-                    requests.post("http://127.0.0.1:5000/postdata",json = {"time" : time.ctime(), "state" : "open"})
+                    senddata({"time" : ctm, "state" : "open"})
                 elif wcode == 'pclose':
                     tm = tm + 5
-                    requests.post("http://127.0.0.1:5000/postdata",json = {"time" : time.ctime(), "state" : "close"})
+                    senddata({"time" : ctm, "state" : "close"})
                 else:
                     tm = tm + 10
                     if (r==1 and m == 1):
-                        requests.post("http://127.0.0.1:5000/postdata",json = {"time" : time.ctime(), "state" : "open"})
+                        senddata({"time" : ctm, "state" : "open"})
                     else:
-                        requests.post("http://127.0.0.1:5000/postdata",json = {"time" : time.ctime(), "state" : "close"})
+                        senddata({"time" : ctm, "state" : "close"})
             else:
-                requests.post("http://127.0.0.1:5000/postdata",json = {"time" : time.ctime(), "state" : "close"})
+                senddata({"time" : ctm, "state" : "close"})
         break
     
     time.sleep(30)
